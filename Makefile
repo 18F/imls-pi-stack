@@ -1,4 +1,4 @@
-VERSION := $(shell git describe --tags --abbrev=0)
+VERSION := $(shell git describe --tags --abbrev=0) #
 
 .PHONY: dev
 
@@ -13,15 +13,14 @@ release:
 	@echo "Version needs to be updated from " $(VERSION)
 dev:
 	@echo "Version needs to be updated from " $(VERSION)
-else	
+else
 # make VERSION=v1.2.3 release
 release: versioning
 	@echo $(VERSION) > prod-version.txt
+	cd imls-raspberry-pi ; make release ; cd ..
 
 # make dev
 dev: versioning
 	@echo $(VERSION) > dev-version.txt
 	cd imls-raspberry-pi ; make dev ; cd ..
 endif
-
-

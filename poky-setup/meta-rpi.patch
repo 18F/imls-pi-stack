@@ -1,0 +1,22 @@
+diff --git a/recipes-kernel/linux/linux-raspberrypi_5.15.bb b/recipes-kernel/linux/linux-raspberrypi_5.15.bb
+index 699a31f..5b15d01 100644
+--- a/recipes-kernel/linux/linux-raspberrypi_5.15.bb
++++ b/recipes-kernel/linux/linux-raspberrypi_5.15.bb
+@@ -1,8 +1,8 @@
+-LINUX_VERSION ?= "5.15.24"
++LINUX_VERSION ?= "5.15.32"
+ LINUX_RPI_BRANCH ?= "rpi-5.15.y"
+ LINUX_RPI_KMETA_BRANCH ?= "yocto-5.15"
+ 
+-SRCREV_machine = "770d94882ac145c81af72e9a37180806c3f70bbd"
++SRCREV_machine = "720e66a1a1f9bbe666cf1551cfd8d122640e9eca"
+ SRCREV_meta = "e1b976ee4fb5af517cf01a9f2dd4a32f560ca894"
+ 
+ KMETA = "kernel-meta"
+diff --git a/recipes-multimedia/gstreamer/gstreamer1.0-plugins-good_1.20.%.bbappend b/recipes-multimedia/gstreamer/gstreamer1.0-plugins-good_1.20.%.bbappend
+deleted file mode 100644
+index f3fb144..0000000
+--- a/recipes-multimedia/gstreamer/gstreamer1.0-plugins-good_1.20.%.bbappend
++++ /dev/null
+@@ -1 +0,0 @@
+-PACKAGECONFIG:append:rpi = "${@bb.utils.contains('MACHINE_FEATURES', 'vc4graphics', '', ' rpi', d)}"

@@ -1,7 +1,7 @@
 .PHONY: all
 
 all: 
-	rm -f find-ralnk
+	rm -f wifi-hardware-search-cli
 	go test lshw/*.go
 	go build
 

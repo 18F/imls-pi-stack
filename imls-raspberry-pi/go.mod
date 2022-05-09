@@ -13,6 +13,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.2.4
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/jszwec/csvutil v1.5.0
+	github.com/karalabe/usb v0.0.2 // indirect
 	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1

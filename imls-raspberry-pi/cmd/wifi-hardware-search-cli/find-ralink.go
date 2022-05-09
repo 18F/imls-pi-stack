@@ -9,17 +9,35 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/karalabe/usb"
 	"github.com/jedib0t/go-pretty/v6/text"
 	"gsa.gov/18f/internal/version"
 	"gsa.gov/18f/cmd/wifi-hardware-search-cli/config"
 	"gsa.gov/18f/cmd/wifi-hardware-search-cli/constants"
-	"gsa.gov/18f/cmd/wifi-hardware-search-cli/lshw"
 	"gsa.gov/18f/cmd/wifi-hardware-search-cli/models"
 )
 
+func GetDevices(wlan *models.Device) []map[string]string {
+	devices, err := usb.Enumerate(0, 0)
+	if err != nil {
+		fmt.Println("usb: could not enumerate devices on host")
+		os.Exit(-1)
+	}
+
+	// Bus 002 Device 009: ID 148f:5372 Ralink Technology, Corp. RT5372 Wireless Adapter
+	for _, device := range devices {
+		fmt.Println("---------")
+		fmt.Println("Path:   ", device.Path)
+		fmt.Println("Serial: ", device.Serial)
+		fmt.Println("Manu:   ", device.Manufacturer)
+		fmt.Println("Product:", device.Product)
+	}
+
+	return make([]map[string]string, 1)
+}
+
 func findMatchingDevice(wlan *models.Device) {
-	// GetDeviceHash calls out to `lshw`.
-	devices := lshw.GetDeviceHash(wlan)
+	devices := GetDevices(wlan)
 
 	// We start by assuming that we have not found the device.
 	found := false
@@ -125,8 +143,6 @@ func main() {
 	// Instead of a exit(-1), we might want to have this print true/false, which is important for
 	// ansible integration.
 	existsPtr := flag.Bool("exists", false, "Ask if a device exists. Returns `true` or `false`.")
-	// It is possible, but unlikely, that the location of lshw will change.
-	lshwPtr := flag.String("lshw-path", config.LSHW_EXE, "Path to the `lshw` binary.")
 	searchesPtr := flag.String("searchjson-path", config.SEARCHES_PATH, "Path to a JSON file containing default searches.")
 	// In case we care about versioning.
 	versionPtr := flag.Bool("version", false, "Get the software version and exit.")
@@ -137,7 +153,6 @@ func main() {
 	config.Verbose = verbosePtr
 
 	// Override configuration if needed, in case things move/change names.
-	config.LSHW_EXE = *lshwPtr
 	config.SEARCHES_PATH = *searchesPtr
 
 	// ROOT
@@ -151,6 +166,11 @@ func main() {
 	// If they just want the version, print it and exit.
 	if *versionPtr {
 		fmt.Println(version.GetVersion())
+		os.Exit(0)
+	}
+
+	if !usb.Supported() {
+		fmt.Println("usb: unsupported platform")
 		os.Exit(0)
 	}
 

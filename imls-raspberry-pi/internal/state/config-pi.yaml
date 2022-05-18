@@ -1,0 +1,28 @@
+logging:
+  level: "DEBUG"
+  loggers:
+    - "local:stderr"
+    - "local:tmp"
+    - "api:directus"
+device:
+  apiKey: "DEFAULTAPIKEY"
+  deviceTag: "DEFAULTDEVICETAG"
+  FCFSSeqId: "DEFAULTSEQID"
+storage:
+  mode: "api"
+  runMode: "https"
+  apiHost: "api.data.gov"
+  eventsURI: "/TEST/10x-imls/v2/events/"
+  durationsURI: "/TEST/10x-imls/v2/durations/"
+  minimumMinutes: 5
+  maximumMinutes: 600
+  wiresharkDuration: 45
+cron:
+  reset: "0 0 * * *"
+  heartbeat: "*/5 * * * *"
+paths:
+  wiresharkPath: "/usr/bin/tshark"
+  root: "/www/imls"
+  images: "/www/imls/images"
+  durations: "/www/imls/durations.sqlite"
+  queues: "/www/imls/queues.sqlite"

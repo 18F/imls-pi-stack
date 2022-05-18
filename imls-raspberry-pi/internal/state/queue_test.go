@@ -1,7 +1,7 @@
 package state
 
 import (
-	"os"
+	"testing"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -11,18 +11,9 @@ type QueueSuite struct {
 }
 
 func (suite *QueueSuite) SetupTest() {
-	tempDB, err := os.CreateTemp("", "queue-test.sqlite")
-	if err != nil {
-		suite.Fail(err.Error())
-	}
-	SetConfigAtPath(tempDB.Name())
 }
 
 func (suite *QueueSuite) AfterTest(suiteName, testName string) {
-	dc := GetConfig()
-	// ensure a clean run.
-	os.Remove(dc.GetDatabasePath())
-	dc.Close()
 }
 
 func (suite *QueueSuite) TestQueueCreate() {
@@ -51,6 +42,7 @@ func (suite *QueueSuite) TestPeek() {
 
 func (suite *QueueSuite) TestDequeue() {
 	q := NewQueue("queue1")
+	q.Enqueue("abc")
 	shouldremove, _ := q.Peek()
 	removed, err := q.Dequeue()
 	if err != nil {
@@ -59,4 +51,8 @@ func (suite *QueueSuite) TestDequeue() {
 	if removed != shouldremove {
 		suite.Fail("did not find appropriate next item.")
 	}
+}
+
+func TestQueueSuite(t *testing.T) {
+	suite.Run(t, new(QueueSuite))
 }

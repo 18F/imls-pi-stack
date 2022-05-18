@@ -1,28 +1,13 @@
 package state
 
 import (
-	"os"
+	"testing"
 
 	"github.com/stretchr/testify/suite"
 )
 
 type ListSuite struct {
 	suite.Suite
-}
-
-func (suite *ListSuite) SetupTest() {
-	tempDB, err := os.CreateTemp("", "list-test.sqlite")
-	if err != nil {
-		suite.Fail(err.Error())
-	}
-	SetConfigAtPath(tempDB.Name())
-}
-
-func (suite *ListSuite) AfterTest(suiteName, testName string) {
-	dc := GetConfig()
-	// ensure a clean run.
-	os.Remove(dc.GetDatabasePath())
-	dc.Close()
 }
 
 func (suite *ListSuite) TestList() {
@@ -77,4 +62,7 @@ func (suite *ListSuite) TestListRemove() {
 	if redshirt {
 		suite.Fail("failed to remove the redshirt")
 	}
+}
+func TestListSuite(t *testing.T) {
+	suite.Run(t, new(ListSuite))
 }

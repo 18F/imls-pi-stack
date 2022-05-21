@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"gsa.gov/18f/cmd/session-counter/interfaces"
-	"gsa.gov/18f/cmd/session-counter/structs"
 )
 
 func GetSerial() string {
@@ -166,16 +164,16 @@ func IsDeveloperMode() bool {
 // 	return strings.Contains(strings.ToLower(mode), "test")
 // }
 
-func GetDurationsDatabase() interfaces.Database {
-	// path := dc.config.GetTextField("durations_path")
-	path := viper.GetString("paths.durations")
-	// always make sure we have a durations db created
-	db := NewSqliteDB(path)
-	if !db.CheckTableExists("durations") {
-		db.CreateTableFromStruct(structs.Duration{})
-	}
-	return db
-}
+// func GetDurationsDatabase() state.EphemeralDurationsDB {
+// 	// path := dc.config.GetTextField("durations_path")
+// 	// path := viper.GetString("paths.durations")
+// 	// // always make sure we have a durations db created
+// 	// db := NewSqliteDB(path)
+// 	// if !db.CheckTableExists("durations") {
+// 	// 	db.CreateTableFromStruct(structs.Duration{})
+// 	// }
+// 	return state.GetDurationsDatabase()
+// }
 
 // func (dc *databaseConfig) GetDatabasePath() string {
 // 	return dc.configDB.GetPath()

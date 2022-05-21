@@ -2,50 +2,53 @@ package state
 
 import "errors"
 
-type QueueRow struct {
-	Rowid int
-	Item  string
-}
-type Queue struct {
-	name string
-	fifo []string
+type storable interface {
+	int64 | string
 }
 
-func NewQueue(name string) (q *Queue) {
-	q = &Queue{name: name, fifo: make([]string, 0)}
+type Queue[S storable] struct {
+	name string
+	fifo []S
+}
+
+func NewQueue[S storable](name string) (q *Queue[S]) {
+	q = &Queue[S]{name: name, fifo: make([]S, 0)}
 	return q
 }
 
-func (queue *Queue) Enqueue(item string) {
+func (queue *Queue[S]) Enqueue(item S) {
 	queue.fifo = append(queue.fifo, item)
 }
 
-func (queue *Queue) Peek() (string, error) {
+func (queue *Queue[S]) Peek() (S, error) {
 	if len(queue.fifo) > 0 {
 		return queue.fifo[0], nil
 	} else {
-		return "", errors.New("queue is empty in peek")
+		// https://stackoverflow.com/questions/70585852/return-default-value-for-generic-type
+		var result S
+		return result, errors.New("queue is empty in peek")
 	}
 
 }
 
-func (queue *Queue) Dequeue() (string, error) {
+func (queue *Queue[S]) Dequeue() (S, error) {
 	if len(queue.fifo) > 0 {
-		var s string
+		var s S
 		s, queue.fifo = queue.fifo[0], queue.fifo[1:]
 		return s, nil
 	} else {
-		return "", errors.New("queue is empty in dequeue")
+		var result S
+		return result, errors.New("queue is empty in dequeue")
 	}
 
 }
 
-func (q *Queue) AsList() []string {
+func (q *Queue[S]) AsList() []S {
 	return q.fifo
 }
 
-func (q *Queue) Remove(s string) {
-	n := make([]string, 0)
+func (q *Queue[S]) Remove(s S) {
+	n := make([]S, 0)
 	for _, v := range q.fifo {
 		if v != s {
 			n = append(n, v)

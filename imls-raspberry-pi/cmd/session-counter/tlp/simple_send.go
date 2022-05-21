@@ -1,34 +1,30 @@
 package tlp
 
 import (
-	"log"
+	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/viper"
-	"gsa.gov/18f/cmd/session-counter/interfaces"
 	"gsa.gov/18f/cmd/session-counter/state"
-	"gsa.gov/18f/cmd/session-counter/structs"
 	"gsa.gov/18f/internal/http"
 )
 
-func SimpleSend(db interfaces.Database, sq *state.Queue) {
+func SimpleSend(sq *state.Queue[int64]) {
 	// cfg.Log().Debug("Starting BatchSend")
 	// This only comes in on reset...
 	// sq := state.NewList("to_send")
 	sessionsToSend := sq.AsList()
 
 	for _, nextSessionIDToSend := range sessionsToSend {
-		durations := []structs.Duration{}
-		// FIXME: Leaky Abstraction
-		err := db.GetPtr().Select(&durations, "SELECT * FROM durations WHERE session_id=?", nextSessionIDToSend)
+		durations := state.GetDurations(nextSessionIDToSend)
 
-		if err != nil {
-			// cfg.Log().Info("error in extracting durations for session", nextSessionIDToSend)
-			// cfg.Log().Error(err.Error())
-		}
-		// cfg.Log().Debug("found ", len(durations), " durations to send in session ", nextSessionIDToSend)
+		log.Debug().
+			Int("duration count", len(durations)).
+			Int64("session id", nextSessionIDToSend).
+			Msg("SimpleSend")
 
 		if len(durations) == 0 {
 			// cfg.Log().Info("found zero durations to send/draw. dequeing session [", nextSessionIDToSend, "]")
+			log.Debug().Msg("found zero durations to send. dequeueing.")
 			sq.Remove(nextSessionIDToSend)
 		} else if state.IsStoringToAPI() {
 			// cfg.Log().Info("attempting to send batch [", nextSessionIDToSend, "][", len(durations), "] to the API server")
@@ -39,10 +35,12 @@ func SimpleSend(db interfaces.Database, sq *state.Queue) {
 			}
 			// After writing images, we come back and try and send the data remotely.
 			// cfg.Log().Debug("PostJSONing ", len(data), " duration datas")
-			err = http.PostJSON(viper.GetString("storage.durationsURI"), data)
+			err := http.PostJSON(viper.GetString("storage.durationsURI"), data)
 			if err != nil {
-				log.Println("could not log to API; session ", nextSessionIDToSend, " not sent; left on queue")
-				log.Println(err.Error())
+				log.Info().
+					Int64("session id", nextSessionIDToSend).
+					Err(err).
+					Msg("could not log into API; session id left on queue.")
 			} else {
 				// If we successfully sent the data remotely, we can now mark it is as sent.
 				sq.Remove(nextSessionIDToSend)

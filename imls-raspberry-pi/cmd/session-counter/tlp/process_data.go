@@ -4,22 +4,20 @@ import (
 	"fmt"
 
 	"github.com/spf13/viper"
-	"gsa.gov/18f/cmd/session-counter/interfaces"
 	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/cmd/session-counter/structs"
 )
 
-func ProcessData(dDB interfaces.Database, sq *state.Queue, iq *state.Queue) bool {
+func ProcessData(sq *state.Queue[int64]) bool {
 	// Queue up what needs to be sent still.
-	thissession := state.GetCurrentSessionId()
+	thisSession := state.GetCurrentSessionId()
 	// cfg.Log().Debug("queueing current session [ ", thissession, " ] to images and send queue... ")
-	if thissession >= 0 {
-		sq.Enqueue(fmt.Sprint(thissession))
-		iq.Enqueue(fmt.Sprint(thissession))
+	if thisSession >= 0 {
+		sq.Enqueue(thisSession)
 	}
 
 	pidCounter := 0
-	durations := make([]interface{}, 0)
+	durations := make([]structs.Duration, 0)
 
 	for _, se := range state.GetMACs() {
 
@@ -38,6 +36,7 @@ func ProcessData(dDB interfaces.Database, sq *state.Queue, iq *state.Queue) bool
 		pidCounter += 1
 	}
 
-	dDB.GetTableFromStruct(structs.Duration{}).InsertMany(durations)
+	//dDB.GetTableFromStruct(structs.Duration{}).InsertMany(durations)
+	state.StoreManyDurations(thisSession, durations)
 	return true
 }

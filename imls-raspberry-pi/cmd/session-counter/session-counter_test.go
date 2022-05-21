@@ -59,9 +59,7 @@ func MockRun(rundays int, nummacs int, numfoundperminute int) {
 	// cfg := state.GetConfig()
 	// The MAC database MUST be ephemeral. Put it in RAM.
 
-	sq := state.NewQueue("to_send")
-	iq := state.NewQueue("images")
-	durationsdb := state.GetDurationsDatabase()
+	sq := state.NewQueue[int64]("to_send")
 
 	// Create a pool of NUMMACS devices to draw from.
 	// We will send NUMFOUNDPERMINUTE each minute
@@ -89,15 +87,13 @@ func MockRun(rundays int, nummacs int, numfoundperminute int) {
 				// Then we run the processing at midnight (once per 24 hours)
 				// cfg.Log().Info("RUNNING PROCESSDATA at " + fmt.Sprint(state.GetClock().Now().In(time.Local)))
 				// Copy ephemeral durations over to the durations table
-				tlp.ProcessData(durationsdb, sq, iq)
-				// Draw images of the data
-				// tlp.WriteImages(durationsdb)
+				tlp.ProcessData(sq)
 				// Try sending the data
-				tlp.SimpleSend(durationsdb, sq)
+				tlp.SimpleSend(sq)
 				// Increment the session counter
 				state.IncrementSessionId()
 				// Clear out the ephemeral data for the next day of monitoring
-				state.ClearEphemeralDB()
+				state.ClearEphemeralMACDB()
 			}
 		}
 
@@ -109,11 +105,8 @@ func TestAllUp(t *testing.T) {
 	_, filename, _, _ := runtime.Caller(0)
 	fmt.Println(filename)
 	path := filepath.Dir(filename)
-	// state.SetConfigAtPath(filepath.Join(path, "test", "config.sqlite"))
-	viper.Set("storage.mode", "local")                                      // SetStorageMode("local")
-	viper.Set("paths.root", filepath.Join(path, "test", "www"))             //SetRootPath(filepath.Join(path, "test", "www"))
-	viper.Set("paths.images", filepath.Join(path, "test", "www", "images")) //SetImagesPath(filepath.Join(path, "test", "www", "images"))
-	// cfg.SetQueuesPath(filepath.Join(path, "test", "queues.sqlite"))
+	viper.Set("storage.mode", "local")                          // SetStorageMode("local")
+	viper.Set("paths.root", filepath.Join(path, "test", "www")) //SetRootPath(filepath.Join(path, "test", "www"))
 	viper.Set("paths.durations", filepath.Join(path, "test", "durations.sqlite"))
 
 	// cfg.Log().SetLogLevel("DEBUG")

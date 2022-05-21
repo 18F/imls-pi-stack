@@ -37,9 +37,7 @@ func runEvery(crontab string, c *cron.Cron, fun func()) {
 }
 
 func run2() {
-	sq := state.NewQueue("to_send")
-	iq := state.NewQueue("images")
-	durationsdb := state.GetDurationsDatabase()
+	sq := state.NewQueue[int64]("to_send")
 	c := cron.New()
 
 	go runEvery("*/1 * * * *", c,
@@ -55,15 +53,13 @@ func run2() {
 		func() {
 			// cfg.Log().Info("RUNNING PROCESSDATA at ", state.GetClock().Now().In(time.Local))
 			// Copy ephemeral durations over to the durations table
-			tlp.ProcessData(durationsdb, sq, iq)
-			// Draw images of the data
-			//tlp.WriteImages(durationsdb)
+			tlp.ProcessData(sq)
 			// Try sending the data
-			tlp.SimpleSend(durationsdb, sq)
+			tlp.SimpleSend(sq)
 			// Increment the session counter
 			state.IncrementSessionId()
 			// Clear out the ephemeral data for the next day of monitoring
-			state.ClearEphemeralDB()
+			state.ClearEphemeralMACDB()
 		})
 
 	// go runEvery()

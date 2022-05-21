@@ -4,6 +4,8 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"time"
+
+	"gsa.gov/18f/cmd/session-counter/structs"
 )
 
 type StartEnd struct {
@@ -11,16 +13,16 @@ type StartEnd struct {
 	End   int64
 }
 
-type EphemeralDB map[string]StartEnd
+type EphemeralMACDB map[string]StartEnd
 
-var ed EphemeralDB = make(EphemeralDB)
+var emd EphemeralMACDB = make(EphemeralMACDB)
 
-func GetMACs() EphemeralDB {
-	return ed
+func GetMACs() EphemeralMACDB {
+	return emd
 }
 
-func ClearEphemeralDB() {
-	ed = make(EphemeralDB)
+func ClearEphemeralMACDB() {
+	emd = make(EphemeralMACDB)
 }
 
 // NOTE: Do not log MAC addresses.
@@ -30,11 +32,11 @@ func RecordMAC(mac string) {
 	// cfg.Log().Debug("THE TIME IS NOW ", GetClock().Now().In(time.Local), " or ", now)
 
 	// Check if we already have the MAC address in the ephemeral table.
-	if p, ok := ed[mac]; ok {
+	if p, ok := emd[mac]; ok {
 		//cfg.Log().Debug(mac, " exists, updating")
 		// Has this device been away for more than 2 hours?
 		// Start by grabbing the start/end times.
-		se := ed[mac]
+		se := emd[mac]
 		if (now > se.End) && ((now - se.End) > MAC_MEMORY_DURATION_SEC) {
 			// If it has been, we need to "forget" the old device.
 			// Do this by hashing the mac with the current time, store the original data
@@ -42,15 +44,45 @@ func RecordMAC(mac string) {
 			// see it again (in less than 2h).
 			// cfg.Log().Debug(mac, " is an old mac, refreshing/changing")
 			sha1 := sha1.Sum([]byte(mac + fmt.Sprint(now)))
-			ed[fmt.Sprintf("%x", sha1)] = se
-			ed[mac] = StartEnd{Start: now, End: now}
+			emd[fmt.Sprintf("%x", sha1)] = se
+			emd[mac] = StartEnd{Start: now, End: now}
 		} else {
 			// Just update the mac address. It has been less than 2h.
-			ed[mac] = StartEnd{Start: p.Start, End: now}
+			emd[mac] = StartEnd{Start: p.Start, End: now}
 		}
 	} else {
 		// We have never seen the MAC address.
 		//cfg.Log().Debug(mac, " is new, inserting")
-		ed[mac] = StartEnd{Start: now, End: now}
+		emd[mac] = StartEnd{Start: now, End: now}
 	}
+}
+
+type EphemeralDurationsDB map[int64][]structs.Duration
+
+var edd EphemeralDurationsDB = make(EphemeralDurationsDB)
+
+func StoreManyDurations(session_id int64, durations []structs.Duration) {
+	if _, ok := edd[session_id]; ok {
+		edd[session_id] = append(edd[session_id], durations...)
+	} else {
+		edd[session_id] = make([]structs.Duration, 0)
+		edd[session_id] = append(edd[session_id], durations...)
+	}
+
+}
+
+func GetDurations(session_id int64) []structs.Duration {
+	if db, ok := edd[session_id]; ok {
+		return db
+	} else {
+		return make([]structs.Duration, 0)
+	}
+}
+
+func ClearAllEphemeralDurations() {
+	edd = make(EphemeralDurationsDB)
+}
+
+func ClearEphemeralDurationsSession(session_id int64) {
+	edd[session_id] = make([]structs.Duration, 0)
 }

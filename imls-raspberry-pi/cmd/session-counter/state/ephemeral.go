@@ -5,8 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"gsa.gov/18f/cmd/session-counter/structs"
 )
+
+// For how long do we recognize a device?
+// 2 hours. This is 2 * 60 minutes * 60 seconds.
+// If we see a MAC within this window, we "remember" it.
+// If we see a MAC, 2h go by, and we see it again, we're going
+// to "forget" the original sighting, and pretend the device is new.
+const MAC_MEMORY_DURATION_SEC = 2 * 60 * 60
 
 type StartEnd struct {
 	Start int64
@@ -16,6 +24,10 @@ type StartEnd struct {
 type EphemeralMACDB map[string]StartEnd
 
 var emd EphemeralMACDB = make(EphemeralMACDB)
+
+func GetEphemeralDBLength() int {
+	return len(emd)
+}
 
 func GetMACs() EphemeralMACDB {
 	return emd
@@ -28,12 +40,10 @@ func ClearEphemeralMACDB() {
 // NOTE: Do not log MAC addresses.
 func RecordMAC(mac string) {
 	now := GetClock().Now().In(time.Local).Unix()
-	// cfg := GetConfig()
-	// cfg.Log().Debug("THE TIME IS NOW ", GetClock().Now().In(time.Local), " or ", now)
-
 	// Check if we already have the MAC address in the ephemeral table.
 	if p, ok := emd[mac]; ok {
-		//cfg.Log().Debug(mac, " exists, updating")
+		// Do not log MAC addresses.
+		// log.Debug().Str("mac", mac).Msg("recordmac: exists, updating")
 		// Has this device been away for more than 2 hours?
 		// Start by grabbing the start/end times.
 		se := emd[mac]
@@ -42,7 +52,8 @@ func RecordMAC(mac string) {
 			// Do this by hashing the mac with the current time, store the original data
 			// unchanged, and create a new entry for the current mac address, in case we
 			// see it again (in less than 2h).
-			// cfg.Log().Debug(mac, " is an old mac, refreshing/changing")
+			// Do not log MAC addresses.
+			// log.Debug().Str("mac", mac).Msg("recordmac: refreshing/changing")
 			sha1 := sha1.Sum([]byte(mac + fmt.Sprint(now)))
 			emd[fmt.Sprintf("%x", sha1)] = se
 			emd[mac] = StartEnd{Start: now, End: now}
@@ -52,7 +63,8 @@ func RecordMAC(mac string) {
 		}
 	} else {
 		// We have never seen the MAC address.
-		//cfg.Log().Debug(mac, " is new, inserting")
+		// Do not log MAC addresses.
+		// log.Debug().Str("mac", mac).Msg("recordmac: new, inserting")
 		emd[mac] = StartEnd{Start: now, End: now}
 	}
 }
@@ -62,6 +74,11 @@ type EphemeralDurationsDB map[int64][]structs.Duration
 var edd EphemeralDurationsDB = make(EphemeralDurationsDB)
 
 func StoreManyDurations(session_id int64, durations []structs.Duration) {
+	log.Debug().
+		Int("len", len(durations)).
+		Int64("session_id", session_id).
+		Msg("storing many durations")
+
 	if _, ok := edd[session_id]; ok {
 		edd[session_id] = append(edd[session_id], durations...)
 	} else {

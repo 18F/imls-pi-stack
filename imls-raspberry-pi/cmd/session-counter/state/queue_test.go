@@ -17,23 +17,32 @@ func (suite *QueueSuite) AfterTest(suiteName, testName string) {
 }
 
 func (suite *QueueSuite) TestQueueCreate() {
-	NewQueue("queue1")
+	NewQueue[string]("queue1")
 }
 
 func (suite *QueueSuite) TestEnqueue() {
-	q := NewQueue("queue1")
+	q := NewQueue[string]("queue1")
 	q.Enqueue("123")
 	q.Enqueue("abc")
 }
 
 func (suite *QueueSuite) TestMultiEnqueue() {
-	q := NewQueue("queue1")
+	q := NewQueue[string]("queue1")
 	q.Enqueue("123")
 	q.Enqueue("123")
 }
 
+func (suite *QueueSuite) TestQueueLength() {
+	q := NewQueue[string]("queue1")
+	q.Enqueue("123")
+	q.Enqueue("123")
+	if q.Length() != 2 {
+		suite.Fail("queue is the wrong length")
+	}
+}
+
 func (suite *QueueSuite) TestPeek() {
-	q := NewQueue("newqueue")
+	q := NewQueue[string]("newqueue")
 	_, err := q.Peek()
 	if err == nil {
 		suite.Fail("peek on an empty returned nil")
@@ -41,7 +50,7 @@ func (suite *QueueSuite) TestPeek() {
 }
 
 func (suite *QueueSuite) TestDequeue() {
-	q := NewQueue("queue1")
+	q := NewQueue[string]("queue1")
 	q.Enqueue("abc")
 	shouldremove, _ := q.Peek()
 	removed, err := q.Dequeue()

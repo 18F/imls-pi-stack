@@ -7,8 +7,9 @@ import (
 	"strings"
 	"syscall"
 
-	"gsa.gov/18f/internal/logwrapper"
-	"gsa.gov/18f/internal/state"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/internal/wifi-hardware-search/models"
 )
 
@@ -16,18 +17,16 @@ import (
 const MACLENGTH = 17
 
 func TSharkRunner(adapter string) []string {
-	cfg := state.GetConfig()
-	lw := logwrapper.NewLogger(nil)
 	tsharkCmd := exec.Command(
-		cfg.GetString("paths.wiresharkPath"),
-		"-a", fmt.Sprintf("duration:%d", cfg.GetInt("storage.wiresharkDuration")),
+		viper.GetString("paths.wiresharkPath"),
+		"-a", fmt.Sprintf("duration:%d", viper.GetInt("storage.wiresharkDuration")),
 		"-I", "-i", adapter,
 		"-Tfields", "-e", "wlan.sa")
 
 	tsharkOut, err := tsharkCmd.StdoutPipe()
 	if err != nil {
-		lw.Error("could not open wireshark pipe")
-		lw.Error(err.Error())
+		// lw.Error("could not open wireshark pipe")
+		// lw.Error(err.Error())
 	}
 	// The closer is called on exe exit. Idomatic use does not
 	// explicitly call the closer. BUT DO WE HAVE LEAKS?
@@ -35,13 +34,13 @@ func TSharkRunner(adapter string) []string {
 
 	err = tsharkCmd.Start()
 	if err != nil {
-		lw.Error("could not exe wireshark")
-		lw.Error(err.Error())
+		// lw.Error("could not exe wireshark")
+		// lw.Error(err.Error())
 	}
 	tsharkBytes, err := ioutil.ReadAll(tsharkOut)
 	if err != nil {
-		lw.Info("did not read wireshark bytes")
-		lw.Error(err.Error())
+		// lw.Info("did not read wireshark bytes")
+		// lw.Error(err.Error())
 	}
 
 	//tsharkCmd.Wait()
@@ -50,10 +49,13 @@ func TSharkRunner(adapter string) []string {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-				lw.Fatal("tshark exit status ", status.ExitStatus(), " ", string(tsharkBytes))
+				log.Fatal().
+					Int("status", status.ExitStatus()).
+					Str("bytes", string(tsharkBytes)).
+					Msg("tshark exit status")
 			}
 		} else {
-			lw.Fatal("tsharkCmd.Wait()", err.Error())
+			// lw.Fatal("tsharkCmd.Wait()", err.Error())
 		}
 	}
 
@@ -107,8 +109,8 @@ func SimpleShark(
 func StoreMacs(keepers []string) {
 	//cfg := state.GetConfig()
 	// Do not log MAC addresses...
-	//cfg.Log().Debug("found ", len(keepers), " keepers")
 	for _, mac := range keepers {
+		// log.Debug().Str("mac", mac).Msg("storemac: keeper")
 		state.RecordMAC(mac)
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 
 	"gsa.gov/18f/cmd/session-counter/state"
@@ -40,8 +41,10 @@ func runFakeWireshark(device string) []string {
 
 	thisTime := rand.Intn(NUMFOUNDPERMINUTE)
 	send := make([]string, thisTime)
-	// cfg := state.GetConfig()
-	//cfg.Log().Info("sending ", len(send), " this minute")
+	// log.Debug().
+	// 	Int("count", thisTime).
+	// 	Msg("devices from fake wireshark run")
+
 	for i := 0; i < thisTime; i++ {
 		send[i] = consistentMACs[rand.Intn(len(consistentMACs))]
 	}
@@ -56,9 +59,6 @@ func isItMidnight(now time.Time) bool {
 }
 
 func MockRun(rundays int, nummacs int, numfoundperminute int) {
-	// cfg := state.GetConfig()
-	// The MAC database MUST be ephemeral. Put it in RAM.
-
 	sq := state.NewQueue[int64]("to_send")
 
 	// Create a pool of NUMMACS devices to draw from.
@@ -85,7 +85,10 @@ func MockRun(rundays int, nummacs int, numfoundperminute int) {
 
 			if isItMidnight(state.GetClock().Now().In(time.Local)) {
 				// Then we run the processing at midnight (once per 24 hours)
-				// cfg.Log().Info("RUNNING PROCESSDATA at " + fmt.Sprint(state.GetClock().Now().In(time.Local)))
+				log.Debug().
+					Str("mock", fmt.Sprint(state.GetClock().Now().In(time.Local))).
+					Msg("running ProcessData")
+
 				// Copy ephemeral durations over to the durations table
 				tlp.ProcessData(sq)
 				// Try sending the data
@@ -101,16 +104,12 @@ func MockRun(rundays int, nummacs int, numfoundperminute int) {
 }
 
 func TestAllUp(t *testing.T) {
-	// DO NOT USE LOGGING YET
 	_, filename, _, _ := runtime.Caller(0)
 	fmt.Println(filename)
 	path := filepath.Dir(filename)
 	viper.Set("storage.mode", "local")                          // SetStorageMode("local")
 	viper.Set("paths.root", filepath.Join(path, "test", "www")) //SetRootPath(filepath.Join(path, "test", "www"))
 	viper.Set("paths.durations", filepath.Join(path, "test", "durations.sqlite"))
-
-	// cfg.Log().SetLogLevel("DEBUG")
-	// cfg.Log().Info("initial session id: ", cfg.GetCurrentSessionID())
 
 	// Fake the clock
 	mock := clock.NewMock()
@@ -119,11 +118,14 @@ func TestAllUp(t *testing.T) {
 	state.SetClock(mock)
 
 	MockRun(1, 200000, 10)
-	// log.Println("WAITING")
-	time.Sleep(5 * time.Second)
+	log.Info().Msg("WAITING")
+	time.Sleep(2 * time.Second)
 
 	state.IncrementSessionId()
 	// cfg.Log().Info("next session id: ", cfg.GetCurrentSessionID())
+	log.Info().
+		Int64("session id", state.GetCurrentSessionId()).
+		Msg("next session id")
 
 	// Fake the clock
 	mt, _ = time.Parse("2006-01-02T15:04", "1976-11-12T00:01")

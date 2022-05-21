@@ -31,6 +31,10 @@ func (queue *Queue[S]) Peek() (S, error) {
 
 }
 
+func (queue *Queue[S]) Length() int {
+	return len(queue.fifo)
+}
+
 func (queue *Queue[S]) Dequeue() (S, error) {
 	if len(queue.fifo) > 0 {
 		var s S

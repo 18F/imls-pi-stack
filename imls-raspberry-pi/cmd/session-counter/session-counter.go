@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"runtime"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/cmd/session-counter/tlp"
@@ -15,32 +17,9 @@ import (
 	"gsa.gov/18f/internal/wifi-hardware-search/search"
 )
 
-func initConfigFromFlags() {
-	// versionPtr := flag.Bool("version", false, "Get the software version and exit.")
-	// // configPathPtr := flag.String("config", "", "Path to config.sqlite. REQUIRED.")
-	// flag.Parse()
-
-	// // If they just want the version, print and exit.
-	// if *versionPtr {
-	// 	fmt.Println(version.GetVersion())
-	// 	os.Exit(0)
-	// }
-
-	// // Make sure a config is passed.
-	// if *configPathPtr == "" {
-	// 	log.Fatal("The flag --config MUST be provided.")
-	// 	os.Exit(1)
-	// }
-
-	// if _, err := os.Stat(*configPathPtr); os.IsNotExist(err) {
-	// 	log.Println("Looked for config at ", *configPathPtr)
-	// 	log.Fatal("Cannot find config file. Exiting.")
-	// }
-
-	// Using Viper; just path --config
-	// state.SetConfigAtPath(*configPathPtr)
-
-}
+var (
+	cfgFile string
+)
 
 func runEvery(crontab string, c *cron.Cron, fun func()) {
 	// cfg := state.GetConfig()
@@ -89,37 +68,74 @@ func run2() {
 	c.Start()
 }
 
-func initConfig() *viper.Viper {
-	if runtime.GOOS == "windows" {
-		viper.SetConfigName("config-win")
-	} else {
-		viper.SetConfigName("config-pi")
-	}
-
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("$HOME/.session-counter")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %w", err))
-	}
-
-	state.NewSessionId()
-
-	return viper.GetViper()
+var rootCmd = &cobra.Command{
+	Use:   "session-counter",
+	Short: "A tool for monitoring wifi devices while preserving privacy.",
+	Long: `session-counter watches to see what wifi devices are 
+nearby while carefully leaving out information that would impose 
+on the privacy of people around you.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		launchTLP()
+	},
 }
 
-func main() {
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print the version number of session-counter",
+	Long:  `All software has versions. This is session-counter's`,
+	Run: func(cmd *cobra.Command, args []string) {
+
+		fmt.Println("v0.1.0")
+	},
+}
+
+func initConfig() {
+	if cfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// Find home directory.
+		home, err := os.UserHomeDir()
+		cobra.CheckErr(err)
+
+		// Search config in home directory with name ".cobra" (without extension).
+		viper.AddConfigPath(filepath.Join(home, ".session-counter"))
+		viper.AddConfigPath(".")
+
+		viper.SetConfigType("yaml")
+		viper.SetConfigName("config")
+	}
+
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err == nil {
+		log.Info().Msg(viper.ConfigFileUsed())
+	} else {
+		panic("could not find config. exiting.")
+	}
+
+}
+
+func launchTLP() {
 	log.Info().
-		Str("msg", "startup session id").
-		Int64("session_id", state.GetCurrentSessionId())
+		Int64("session_id", state.GetCurrentSessionId()).
+		Msg("session id at launch")
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go run2()
-
 	// Stay a while. STAY FOREVER!
 	// https://en.wikipedia.org/wiki/Impossible_Mission
 	wg.Wait()
+}
+
+func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	log.Info().Msg("hi")
+
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.session-counter/config.yaml)")
+	cobra.OnInitialize(initConfig)
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.Execute()
 }

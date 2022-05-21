@@ -18,14 +18,18 @@ import (
 )
 
 var (
-	cfgFile string
+	cfgFile  string
+	logLevel string
 )
 
 func runEvery(crontab string, c *cron.Cron, fun func()) {
-	// cfg := state.GetConfig()
-	// id was first param
-	_, err := c.AddFunc(crontab, fun)
-	// cfg.Log().Debug("launched crontab ", crontab, " with id ", id)
+
+	id, err := c.AddFunc(crontab, fun)
+	log.Debug().
+		Str("crontab", crontab).
+		Str("id", fmt.Sprintf("%v", id)).
+		Msg("runEvery")
+
 	if err != nil {
 		// cfg.Log().Error("cron: could not set up crontab entry")
 		// cfg.Log().Fatal(err.Error())
@@ -68,6 +72,19 @@ func run2() {
 	c.Start()
 }
 
+func launchTLP() {
+	log.Info().
+		Int64("session_id", state.GetCurrentSessionId()).
+		Msg("session id at launch")
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go run2()
+	// Stay a while. STAY FOREVER!
+	// https://en.wikipedia.org/wiki/Impossible_Mission
+	wg.Wait()
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "session-counter",
 	Short: "A tool for monitoring wifi devices while preserving privacy.",
@@ -84,12 +101,27 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version number of session-counter",
 	Long:  `All software has versions. This is session-counter's`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		fmt.Println("v0.1.0")
 	},
 }
 
+func initLogs() {
+	switch lvl := logLevel; lvl {
+	case "debug":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "info":
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "warn":
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+}
+
 func initConfig() {
+	initLogs()
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
@@ -116,25 +148,12 @@ func initConfig() {
 
 }
 
-func launchTLP() {
-	log.Info().
-		Int64("session_id", state.GetCurrentSessionId()).
-		Msg("session id at launch")
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go run2()
-	// Stay a while. STAY FOREVER!
-	// https://en.wikipedia.org/wiki/Impossible_Mission
-	wg.Wait()
-}
-
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	log.Info().Msg("hi")
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.session-counter/config.yaml)")
+	rootCmd.PersistentFlags().StringVar(&logLevel, "logging", "info", "logging level (debug, info, warn, error)")
+
 	cobra.OnInitialize(initConfig)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.Execute()

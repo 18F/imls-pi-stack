@@ -103,3 +103,9 @@ func ClearAllEphemeralDurations() {
 func ClearEphemeralDurationsSession(session_id int64) {
 	edd[session_id] = make([]structs.Duration, 0)
 }
+
+func DumpEphemeralDurationsDB(session_id int64) {
+	for _, d := range edd[session_id] {
+		fmt.Println(d)
+	}
+}

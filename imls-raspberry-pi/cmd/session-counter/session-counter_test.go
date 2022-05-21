@@ -107,8 +107,8 @@ func TestAllUp(t *testing.T) {
 	_, filename, _, _ := runtime.Caller(0)
 	fmt.Println(filename)
 	path := filepath.Dir(filename)
-	viper.Set("storage.mode", "local")                          // SetStorageMode("local")
-	viper.Set("paths.root", filepath.Join(path, "test", "www")) //SetRootPath(filepath.Join(path, "test", "www"))
+	viper.Set("storage.mode", "local")
+	viper.Set("paths.root", filepath.Join(path, "test", "www"))
 	viper.Set("paths.durations", filepath.Join(path, "test", "durations.sqlite"))
 
 	// Fake the clock
@@ -117,7 +117,8 @@ func TestAllUp(t *testing.T) {
 	mock.Set(mt)
 	state.SetClock(mock)
 
-	MockRun(1, 200000, 10)
+	log.Info().Msg("=== Running 1 day ===")
+	MockRun(1, 20, 15)
 	log.Info().Msg("WAITING")
 	time.Sleep(2 * time.Second)
 
@@ -132,7 +133,8 @@ func TestAllUp(t *testing.T) {
 	mock.Set(mt)
 	state.SetClock(mock)
 
-	MockRun(5, 200000, 10)
+	log.Info().Msg("=== Running 5 days ===")
+	MockRun(5, 2000, 10)
 
 	mt, _ = time.Parse("2006-01-02T15:04", "1978-01-01T00:01")
 	mock.Set(mt)

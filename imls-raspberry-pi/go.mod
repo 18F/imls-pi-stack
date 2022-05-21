@@ -16,6 +16,7 @@ require (
 	github.com/jszwec/csvutil v1.5.0
 	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/robfig/cron/v3 v3.0.1
+	github.com/rs/zerolog v1.26.1 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.11.0 // indirect
 	github.com/stretchr/testify v1.7.1

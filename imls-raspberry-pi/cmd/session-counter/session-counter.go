@@ -4,6 +4,8 @@ import (
 	"sync"
 
 	"github.com/robfig/cron/v3"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/cmd/session-counter/tlp"
 
@@ -86,17 +88,16 @@ func run2() {
 }
 
 func main() {
-	// DO NOT USE LOGGING YET
-	initConfigFromFlags()
-	//cfg := state.GetConfig()
-	// NOW YOU MAY USE LOGGING.
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.Info().
+		Str("msg", "startup session id").
+		Int64("session_id", state.GetCurrentSessionId())
 
-	// cfg.Log().Info("Startup session id ", cfg.GetCurrentSessionID())
-
-	// Run the network
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go run2()
-	// Wait forever.
+
+	// Stay a while. STAY FOREVER!
+	// https://en.wikipedia.org/wiki/Impossible_Mission
 	wg.Wait()
 }

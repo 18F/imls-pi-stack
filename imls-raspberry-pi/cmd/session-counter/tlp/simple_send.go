@@ -3,14 +3,14 @@ package tlp
 import (
 	"log"
 
+	"github.com/spf13/viper"
+	"gsa.gov/18f/cmd/session-counter/interfaces"
 	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/cmd/session-counter/structs"
 	"gsa.gov/18f/internal/http"
-	"gsa.gov/18f/internal/interfaces"
 )
 
 func SimpleSend(db interfaces.Database, sq *state.Queue) {
-	cfg := state.GetConfig()
 	// cfg.Log().Debug("Starting BatchSend")
 	// This only comes in on reset...
 	// sq := state.NewList("to_send")
@@ -39,7 +39,7 @@ func SimpleSend(db interfaces.Database, sq *state.Queue) {
 			}
 			// After writing images, we come back and try and send the data remotely.
 			// cfg.Log().Debug("PostJSONing ", len(data), " duration datas")
-			err = http.PostJSON(cfg, cfg.GetString("storage.durationsURI"), data)
+			err = http.PostJSON(viper.GetString("storage.durationsURI"), data)
 			if err != nil {
 				log.Println("could not log to API; session ", nextSessionIDToSend, " not sent; left on queue")
 				log.Println(err.Error())

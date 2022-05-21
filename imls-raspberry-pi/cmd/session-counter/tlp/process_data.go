@@ -3,13 +3,13 @@ package tlp
 import (
 	"fmt"
 
+	"github.com/spf13/viper"
+	"gsa.gov/18f/cmd/session-counter/interfaces"
 	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/cmd/session-counter/structs"
-	"gsa.gov/18f/internal/interfaces"
 )
 
 func ProcessData(dDB interfaces.Database, sq *state.Queue, iq *state.Queue) bool {
-	cfg := state.GetConfig()
 	// Queue up what needs to be sent still.
 	thissession := state.GetCurrentSessionId()
 	// cfg.Log().Debug("queueing current session [ ", thissession, " ] to images and send queue... ")
@@ -24,10 +24,10 @@ func ProcessData(dDB interfaces.Database, sq *state.Queue, iq *state.Queue) bool
 	for _, se := range state.GetMACs() {
 
 		d := structs.Duration{
-			PiSerial:  cfg.GetString("device.serial"),
+			PiSerial:  viper.GetString("device.serial"),
 			SessionID: fmt.Sprint(state.GetCurrentSessionId()),
-			FCFSSeqID: cfg.GetString("device.fcfsSeqId"),
-			DeviceTag: cfg.GetString("device.tag"),
+			FCFSSeqID: viper.GetString("device.fcfsSeqId"),
+			DeviceTag: viper.GetString("device.tag"),
 			PatronID:  pidCounter,
 			// FIXME: All times should become UNIX epoch seconds...
 			Start: se.Start,

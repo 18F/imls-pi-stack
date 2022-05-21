@@ -18,14 +18,14 @@ import (
 
 var slashWarned bool = false
 
-func PostJSON(cfg *viper.Viper, uri string, data []map[string]interface{}) error {
+func PostJSON(uri string, data []map[string]interface{}) error {
 
 	if state.IsStoringLocally() {
 		// do nothing.
 		return nil
 	}
 
-	tok := cfg.GetString("device.apiKey")
+	tok := viper.GetString("device.apiKey")
 	matched, _ := regexp.MatchString(".*/$", uri)
 	if !slashWarned && !matched {
 		slashWarned = true

@@ -1,71 +1,14 @@
 package state
 
 import (
-	"fmt"
 	"log"
-	"runtime"
 	"strings"
 	"time"
 
 	"github.com/spf13/viper"
-	"gsa.gov/18f/internal/interfaces"
-	"gsa.gov/18f/internal/structs"
+	"gsa.gov/18f/cmd/session-counter/interfaces"
+	"gsa.gov/18f/cmd/session-counter/structs"
 )
-
-// type databaseConfig struct {
-// 	configDB  interfaces.Database
-// 	config    interfaces.Table
-// 	sessionID int64
-// 	logger    interfaces.Logger
-// }
-
-// var singletonConfig databaseConfig
-
-func GetConfig() *viper.Viper {
-	if runtime.GOOS == "windows" {
-		viper.SetConfigName("config-win")
-	} else {
-		viper.SetConfigName("config-pi")
-	}
-
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("$HOME/.session-counter")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %w", err))
-	}
-
-	NewSessionId()
-
-	return viper.GetViper()
-}
-
-// func SetConfigAtPath(configPath string) *databaseConfig {
-// 	// singletonConfig = newConfig(configDBPath)
-// 	viper.AddConfigPath(configPath)
-// 	return GetConfig()
-// }
-
-// NewConfig creates a sqlite file and corresponding config table if not already
-// extant
-// func newConfig(configDBPath string) databaseConfig {
-// 	db := NewSqliteDB(configDBPath)
-// 	var table interfaces.Table
-// 	if !db.CheckTableExists("ConfigDBs") {
-// 		table = db.CreateTableFromStruct(ConfigDB{})
-// 		defaults := ConfigDefaults()
-// 		table.InsertStruct(defaults)
-// 	} else {
-// 		db.InitTable("ConfigDBs")
-// 		table = db.GetTableByName("ConfigDBs")
-// 	}
-
-// 	sessionID := NewSessionID()
-// 	dc := databaseConfig{db, table, sessionID, nil}
-// 	dc.logger = logwrapper.NewLogger(&dc)
-// 	return dc
-// }
 
 func GetSerial() string {
 	// allow the serial to be stored so we can test out different serial and api

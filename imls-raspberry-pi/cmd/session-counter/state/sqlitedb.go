@@ -8,7 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"gsa.gov/18f/internal/interfaces"
+	"gsa.gov/18f/cmd/session-counter/interfaces"
 )
 
 type SqliteDB struct {

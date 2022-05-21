@@ -1,11 +1,14 @@
 package main
 
 import (
+	"fmt"
+	"runtime"
 	"sync"
 
 	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/cmd/session-counter/tlp"
 
@@ -51,7 +54,6 @@ func runEvery(crontab string, c *cron.Cron, fun func()) {
 }
 
 func run2() {
-	cfg := state.GetConfig()
 	sq := state.NewQueue("to_send")
 	iq := state.NewQueue("images")
 	durationsdb := state.GetDurationsDatabase()
@@ -66,7 +68,7 @@ func run2() {
 				tlp.TSharkRunner)
 		})
 
-	go runEvery(cfg.GetString("cron.reset"), c,
+	go runEvery(viper.GetString("cron.reset"), c,
 		func() {
 			// cfg.Log().Info("RUNNING PROCESSDATA at ", state.GetClock().Now().In(time.Local))
 			// Copy ephemeral durations over to the durations table
@@ -85,6 +87,26 @@ func run2() {
 
 	// Start the cron jobs...
 	c.Start()
+}
+
+func initConfig() *viper.Viper {
+	if runtime.GOOS == "windows" {
+		viper.SetConfigName("config-win")
+	} else {
+		viper.SetConfigName("config-pi")
+	}
+
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("$HOME/.session-counter")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("fatal error config file: %w", err))
+	}
+
+	state.NewSessionId()
+
+	return viper.GetViper()
 }
 
 func main() {

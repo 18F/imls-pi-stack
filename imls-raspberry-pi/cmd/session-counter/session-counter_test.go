@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"path/filepath"
 	"runtime"
@@ -11,8 +10,8 @@ import (
 
 	"github.com/benbjohnson/clock"
 
+	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/cmd/session-counter/tlp"
-	"gsa.gov/18f/internal/state"
 	"gsa.gov/18f/internal/wifi-hardware-search/models"
 )
 
@@ -56,12 +55,12 @@ func isItMidnight(now time.Time) bool {
 }
 
 func MockRun(rundays int, nummacs int, numfoundperminute int) {
-	cfg := state.GetConfig()
+	// cfg := state.GetConfig()
 	// The MAC database MUST be ephemeral. Put it in RAM.
 
-	sq := state.NewQueue("sent")
+	sq := state.NewQueue("to_send")
 	iq := state.NewQueue("images")
-	durationsdb := cfg.GetDurationsDatabase()
+	durationsdb := state.GetDurationsDatabase()
 
 	// Create a pool of NUMMACS devices to draw from.
 	// We will send NUMFOUNDPERMINUTE each minute
@@ -87,15 +86,15 @@ func MockRun(rundays int, nummacs int, numfoundperminute int) {
 
 			if isItMidnight(state.GetClock().Now().In(time.Local)) {
 				// Then we run the processing at midnight (once per 24 hours)
-				cfg.Log().Info("RUNNING PROCESSDATA at " + fmt.Sprint(state.GetClock().Now().In(time.Local)))
+				// cfg.Log().Info("RUNNING PROCESSDATA at " + fmt.Sprint(state.GetClock().Now().In(time.Local)))
 				// Copy ephemeral durations over to the durations table
 				tlp.ProcessData(durationsdb, sq, iq)
 				// Draw images of the data
-				tlp.WriteImages(durationsdb)
+				// tlp.WriteImages(durationsdb)
 				// Try sending the data
-				tlp.SimpleSend(durationsdb)
+				tlp.SimpleSend(durationsdb, sq)
 				// Increment the session counter
-				cfg.IncrementSessionID()
+				state.IncrementSessionId()
 				// Clear out the ephemeral data for the next day of monitoring
 				state.ClearEphemeralDB()
 			}
@@ -109,16 +108,16 @@ func TestAllUp(t *testing.T) {
 	_, filename, _, _ := runtime.Caller(0)
 	fmt.Println(filename)
 	path := filepath.Dir(filename)
-	state.SetConfigAtPath(filepath.Join(path, "test", "config.sqlite"))
+	// state.SetConfigAtPath(filepath.Join(path, "test", "config.sqlite"))
 	cfg := state.GetConfig()
-	cfg.SetStorageMode("local")
-	cfg.SetRootPath(filepath.Join(path, "test", "www"))
-	cfg.SetImagesPath(filepath.Join(path, "test", "www", "images"))
-	cfg.SetQueuesPath(filepath.Join(path, "test", "queues.sqlite"))
-	cfg.SetDurationsPath(filepath.Join(path, "test", "durations.sqlite"))
+	cfg.Set("storage.mode", "local")                                      // SetStorageMode("local")
+	cfg.Set("paths.root", filepath.Join(path, "test", "www"))             //SetRootPath(filepath.Join(path, "test", "www"))
+	cfg.Set("paths.images", filepath.Join(path, "test", "www", "images")) //SetImagesPath(filepath.Join(path, "test", "www", "images"))
+	// cfg.SetQueuesPath(filepath.Join(path, "test", "queues.sqlite"))
+	cfg.Set("paths.durations", filepath.Join(path, "test", "durations.sqlite"))
 
-	cfg.Log().SetLogLevel("DEBUG")
-	cfg.Log().Info("initial session id: ", cfg.GetCurrentSessionID())
+	// cfg.Log().SetLogLevel("DEBUG")
+	// cfg.Log().Info("initial session id: ", cfg.GetCurrentSessionID())
 
 	// Fake the clock
 	mock := clock.NewMock()
@@ -127,11 +126,11 @@ func TestAllUp(t *testing.T) {
 	state.SetClock(mock)
 
 	MockRun(1, 200000, 10)
-	log.Println("WAITING")
+	// log.Println("WAITING")
 	time.Sleep(5 * time.Second)
 
-	cfg.IncrementSessionID()
-	cfg.Log().Info("next session id: ", cfg.GetCurrentSessionID())
+	state.IncrementSessionId()
+	// cfg.Log().Info("next session id: ", cfg.GetCurrentSessionID())
 
 	// Fake the clock
 	mt, _ = time.Parse("2006-01-02T15:04", "1976-11-12T00:01")
@@ -144,5 +143,5 @@ func TestAllUp(t *testing.T) {
 	mock.Set(mt)
 	state.SetClock(mock)
 
-	MockRun(90, 2000000, 10)
+	// MockRun(90, 2000000, 10)
 }

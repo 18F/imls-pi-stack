@@ -12,19 +12,20 @@ import (
 	"regexp"
 	"time"
 
-	"gsa.gov/18f/internal/interfaces"
+	"github.com/spf13/viper"
+	"gsa.gov/18f/internal/state"
 )
 
 var slashWarned bool = false
 
-func PostJSON(cfg interfaces.Config, uri string, data []map[string]interface{}) error {
+func PostJSON(cfg *viper.Viper, uri string, data []map[string]interface{}) error {
 
-	if cfg.IsStoringLocally() {
+	if state.IsStoringLocally() {
 		// do nothing.
 		return nil
 	}
 
-	tok := cfg.GetAPIKey()
+	tok := cfg.GetString("device.apiKey")
 	matched, _ := regexp.MatchString(".*/$", uri)
 	if !slashWarned && !matched {
 		slashWarned = true

@@ -11,7 +11,8 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
-	"gsa.gov/18f/internal/interfaces"
+	"github.com/spf13/viper"
+	"gsa.gov/18f/internal/state"
 )
 
 // Code for this wrapper inspired by
@@ -58,11 +59,11 @@ func (l *StandardLogger) GetLogLevelName() string {
 	return "UNKNOWN"
 }
 
-func NewLogger(cfg interfaces.Config) *StandardLogger {
+func NewLogger(cfg *viper.Viper) *StandardLogger {
 	once.Do(func() {
 		initLogger(cfg)
 		if cfg != nil {
-			standardLogger.SetLogLevel(cfg.GetLogLevel())
+			standardLogger.SetLogLevel(cfg.GetString("logging.level"))
 		} else {
 			standardLogger.SetLogLevel("FATAL")
 		}
@@ -75,7 +76,7 @@ func NewLogger(cfg interfaces.Config) *StandardLogger {
 }
 
 // UnsafeNewLogger is for  unit testing only.
-func UnsafeNewLogger(cfg interfaces.Config) (sl *StandardLogger) {
+func UnsafeNewLogger(cfg *viper.Viper) (sl *StandardLogger) {
 	if standardLogger == nil {
 		initLogger(cfg)
 	}
@@ -83,7 +84,7 @@ func UnsafeNewLogger(cfg interfaces.Config) (sl *StandardLogger) {
 }
 
 // Convoluted for use within libraries...
-func initLogger(cfg interfaces.Config) {
+func initLogger(cfg *viper.Viper) {
 	var baseLogger = logrus.New()
 
 	if baseLogger == nil {
@@ -94,7 +95,7 @@ func initLogger(cfg interfaces.Config) {
 	loggers := []string{"local:stderr"}
 
 	if cfg != nil {
-		loggers = cfg.GetLoggers()
+		loggers = cfg.GetStringSlice("logging.loggers")
 	}
 
 	writers := make([]io.Writer, 0)
@@ -128,7 +129,7 @@ func initLogger(cfg interfaces.Config) {
 			}
 			writers = append(writers, logFile)
 		case "api:directus":
-			if cfg.IsStoringToAPI() {
+			if state.IsStoringToAPI() {
 				api := NewAPILogger(cfg)
 				writers = append(writers, api)
 			} else {

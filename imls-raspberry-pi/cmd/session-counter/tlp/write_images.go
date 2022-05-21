@@ -19,15 +19,15 @@ func writeImages(durations []structs.Duration, sessionid string) error {
 	lw := logwrapper.NewLogger(nil)
 	var reterr error
 
-	if _, err := os.Stat(cfg.GetWWWRoot()); os.IsNotExist(err) {
-		err := os.Mkdir(cfg.GetWWWRoot(), 0777)
+	if _, err := os.Stat(cfg.GetString("paths.root")); os.IsNotExist(err) {
+		err := os.Mkdir(cfg.GetString("paths.root"), 0777)
 		if err != nil {
-			lw.Error("could not create web directory: ", cfg.GetWWWRoot())
+			lw.Error("could not create web directory: ", cfg.GetString("paths.root"))
 			reterr = err
 		}
 	}
-	if _, err := os.Stat(cfg.GetWWWImages()); os.IsNotExist(err) {
-		err := os.Mkdir(cfg.GetWWWImages(), 0777)
+	if _, err := os.Stat(cfg.GetString("paths.images")); os.IsNotExist(err) {
+		err := os.Mkdir(cfg.GetString("paths.images"), 0777)
 		if err != nil {
 			lw.Error("could not create image directory")
 			reterr = err
@@ -43,35 +43,35 @@ func writeImages(durations []structs.Duration, sessionid string) error {
 		int(yesterday.Month()),
 		int(yesterday.Day()),
 		sessionid,
-		cfg.GetFCFSSeqID(),
-		cfg.GetDeviceTag())
+		cfg.GetString("device.FCFSSeqId"),
+		cfg.GetString("device.tag"))
 
-	path := filepath.Join(cfg.GetWWWImages(), imageFilename)
+	path := filepath.Join(cfg.GetString("paths.images"), imageFilename)
 	// func DrawPatronSessions(cfg *config.Config, durations []Duration, outputPath string) {
 	analysis.DrawPatronSessions(durations, path)
 	return reterr
 }
 
-func WriteImages(db interfaces.Database) {
-	cfg := state.GetConfig()
-	iq := state.NewQueue("images")
+func WriteImages(db interfaces.Database, iq *state.List) {
+	// cfg := state.GetConfig()
+	// iq := state.NewList("images")
 	imagesToWrite := iq.AsList()
-	cfg.Log().Info("sessions ", imagesToWrite, " are waiting to be written on the image queue")
+	// cfg.Log().Info("sessions ", imagesToWrite, " are waiting to be written on the image queue")
 	for _, nextImage := range imagesToWrite {
 		durations := []structs.Duration{}
 		var count int
 		db.GetPtr().QueryRow("SELECT COUNT(*) FROM durations WHERE session_id=?", nextImage).Scan(&count)
 		// cfg.Log().Info("Found ", count, " durations to filter down...")
 		err := db.GetPtr().Select(&durations, "SELECT * FROM durations WHERE session_id=?", nextImage)
-		cfg.Log().Debug("found ", len(durations), " durations in WriteImages")
+		// cfg.Log().Debug("found ", len(durations), " durations in WriteImages")
 		if err != nil {
-			cfg.Log().Info("error in extracting durations for session", nextImage)
-			cfg.Log().Error(err.Error())
+			// cfg.Log().Info("error in extracting durations for session", nextImage)
+			// cfg.Log().Error(err.Error())
 		} else {
 			err = writeImages(durations, nextImage)
 			if err != nil {
-				cfg.Log().Error("error in writing images")
-				cfg.Log().Error(err.Error())
+				// cfg.Log().Error("error in writing images")
+				// cfg.Log().Error(err.Error())
 			} else {
 				iq.Remove(nextImage)
 			}

@@ -7,18 +7,20 @@ import (
 	"strings"
 	"syscall"
 
-	"gsa.gov/18f/cmd/session-counter/constants"
 	"gsa.gov/18f/internal/logwrapper"
 	"gsa.gov/18f/internal/state"
 	"gsa.gov/18f/internal/wifi-hardware-search/models"
 )
 
+// Length of a good MAC address
+const MACLENGTH = 17
+
 func TSharkRunner(adapter string) []string {
 	cfg := state.GetConfig()
 	lw := logwrapper.NewLogger(nil)
 	tsharkCmd := exec.Command(
-		cfg.GetWiresharkPath(),
-		"-a", fmt.Sprintf("duration:%d", cfg.GetWiresharkDuration()),
+		cfg.GetString("paths.wiresharkPath"),
+		"-a", fmt.Sprintf("duration:%d", cfg.GetInt("storage.wiresharkDuration")),
 		"-I", "-i", adapter,
 		"-Tfields", "-e", "wlan.sa")
 
@@ -69,7 +71,7 @@ func SimpleShark(
 	searchFn SearchFn,
 	sharkFn SharkFn) bool {
 
-	cfg := state.GetConfig()
+	// cfg := state.GetConfig()
 
 	// Look up the adapter. Use the find-ralink library.
 	// The % will trigger first time through, which we want.
@@ -90,13 +92,13 @@ func SimpleShark(
 		// for removal from the tshark findings.
 		var keepers []string
 		for _, mac := range macmap {
-			if len(mac) >= constants.MACLENGTH {
+			if len(mac) >= MACLENGTH {
 				keepers = append(keepers, mac)
 			}
 		}
 		StoreMacs(keepers)
 	} else {
-		cfg.Log().Info("no wifi devices found. no scanning carried out.")
+		// cfg.Log().Info("no wifi devices found. no scanning carried out.")
 		return false
 	}
 	return true

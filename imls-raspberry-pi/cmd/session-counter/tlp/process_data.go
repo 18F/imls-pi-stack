@@ -3,16 +3,16 @@ package tlp
 import (
 	"fmt"
 
+	"gsa.gov/18f/cmd/session-counter/state"
+	"gsa.gov/18f/cmd/session-counter/structs"
 	"gsa.gov/18f/internal/interfaces"
-	"gsa.gov/18f/internal/state"
-	"gsa.gov/18f/internal/structs"
 )
 
 func ProcessData(dDB interfaces.Database, sq *state.Queue, iq *state.Queue) bool {
 	cfg := state.GetConfig()
 	// Queue up what needs to be sent still.
-	thissession := cfg.GetCurrentSessionID()
-	cfg.Log().Debug("queueing current session [ ", thissession, " ] to images and send queue... ")
+	thissession := state.GetCurrentSessionId()
+	// cfg.Log().Debug("queueing current session [ ", thissession, " ] to images and send queue... ")
 	if thissession >= 0 {
 		sq.Enqueue(fmt.Sprint(thissession))
 		iq.Enqueue(fmt.Sprint(thissession))
@@ -24,10 +24,10 @@ func ProcessData(dDB interfaces.Database, sq *state.Queue, iq *state.Queue) bool
 	for _, se := range state.GetMACs() {
 
 		d := structs.Duration{
-			PiSerial:  cfg.GetSerial(),
-			SessionID: fmt.Sprint(cfg.GetCurrentSessionID()),
-			FCFSSeqID: cfg.GetFCFSSeqID(),
-			DeviceTag: cfg.GetDeviceTag(),
+			PiSerial:  cfg.GetString("device.serial"),
+			SessionID: fmt.Sprint(state.GetCurrentSessionId()),
+			FCFSSeqID: cfg.GetString("device.fcfsSeqId"),
+			DeviceTag: cfg.GetString("device.tag"),
 			PatronID:  pidCounter,
 			// FIXME: All times should become UNIX epoch seconds...
 			Start: se.Start,

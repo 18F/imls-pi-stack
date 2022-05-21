@@ -13,22 +13,22 @@ import (
 
 func isInDurationRange(diff int) bool {
 	cfg := state.GetConfig()
-	return (diff >= cfg.GetMinimumMinutes()) && (diff < cfg.GetMaximumMinutes())
+	return (diff >= cfg.GetInt("storage.minimumMinutes")) && (diff < cfg.GetInt("storage.maximumMinutes"))
 }
 
 func DrawPatronSessions(durations []structs.Duration, outputPath string) {
 	cfg := state.GetConfig()
 
 	if len(durations) == 0 {
-		cfg.Log().Error("DrawPatronSessions was passed zero durations to draw.")
-		cfg.Log().Error("Wanted to draw to the output path ", outputPath)
+		// cfg.Log().Error("DrawPatronSessions was passed zero durations to draw.")
+		// cfg.Log().Error("Wanted to draw to the output path ", outputPath)
 		return
 	}
 
 	// Capture the data about the session while running in a `counter` structure.
 	durationsInRange := 0
 	sort.Sort(structs.ByStart(durations))
-	cfg.Log().Debug("about to iterate over [", len(durations), "] durations")
+	// cfg.Log().Debug("about to iterate over [", len(durations), "] durations")
 
 	for _, d := range durations {
 		st := time.Unix(d.Start, 0).In(time.Local)
@@ -41,14 +41,14 @@ func DrawPatronSessions(durations []structs.Duration, outputPath string) {
 		}
 	}
 
-	cfg.Log().Info("durations to write to the image [", durationsInRange, "]")
+	// cfg.Log().Info("durations to write to the image [", durationsInRange, "]")
 
 	WIDTH := 1440
 	hourWidth := WIDTH / 24
 
 	HEIGHT := 24 * (durationsInRange + 2)
 
-	cfg.Log().Info("image dimensions (WxH) ", WIDTH, " x ", HEIGHT)
+	// cfg.Log().Info("image dimensions (WxH) ", WIDTH, " x ", HEIGHT)
 
 	dc := gg.NewContext(WIDTH, HEIGHT)
 	dc.SetRGBA(0.5, 0.5, 0, 0.5)
@@ -152,7 +152,7 @@ func DrawPatronSessions(durations []structs.Duration, outputPath string) {
 	}
 
 	day := time.Unix(durations[0].Start, 0).In(time.Local)
-	summaryD := fmt.Sprintf("Patron sessions from %v %v, %v - %v %v", day.Month(), day.Day(), day.Year(), cfg.GetFCFSSeqID(), cfg.GetDeviceTag())
+	summaryD := fmt.Sprintf("Patron sessions from %v %v, %v - %v %v", day.Month(), day.Day(), day.Year(), cfg.GetString("device.fcfsSeqId"), cfg.GetString("device.tag"))
 	summaryA := fmt.Sprintf("%v devices seen", totalPatrons)
 	summaryP := fmt.Sprintf("%v patron devices", durationsInRange)
 	summaryM := fmt.Sprintf("%v minutes served", totalMinutes)
@@ -191,12 +191,12 @@ func DrawPatronSessions(durations []structs.Duration, outputPath string) {
 	}
 
 	//baseFilename := fmt.Sprint(filepath.Join(outdir, fmt.Sprintf("%v-%v-%v", sid, seqId, dt)))
-	cfg.Log().Debug("writing summary image to ", outputPath)
+	// cfg.Log().Debug("writing summary image to ", outputPath)
 
 	err := dc.SavePNG(outputPath)
 	if err != nil {
-		cfg.Log().Info("drawing: failed to save png")
-		cfg.Log().Fatal(err.Error())
+		// cfg.Log().Info("drawing: failed to save png")
+		// cfg.Log().Fatal(err.Error())
 	}
 }
 

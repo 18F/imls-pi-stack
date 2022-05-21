@@ -13,6 +13,9 @@ install: all
 test:
 	go test api/*.go
 	go test model/*.go
+	go test state/*.go
+	go test interfaces/*.go
+	go test structs/*.go
 	go test -timeout 60m *.go
 
 crossbuild: clean

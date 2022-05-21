@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/spf13/viper"
 
 	"gsa.gov/18f/cmd/session-counter/state"
 	"gsa.gov/18f/cmd/session-counter/tlp"
@@ -109,12 +110,11 @@ func TestAllUp(t *testing.T) {
 	fmt.Println(filename)
 	path := filepath.Dir(filename)
 	// state.SetConfigAtPath(filepath.Join(path, "test", "config.sqlite"))
-	cfg := state.GetConfig()
-	cfg.Set("storage.mode", "local")                                      // SetStorageMode("local")
-	cfg.Set("paths.root", filepath.Join(path, "test", "www"))             //SetRootPath(filepath.Join(path, "test", "www"))
-	cfg.Set("paths.images", filepath.Join(path, "test", "www", "images")) //SetImagesPath(filepath.Join(path, "test", "www", "images"))
+	viper.Set("storage.mode", "local")                                      // SetStorageMode("local")
+	viper.Set("paths.root", filepath.Join(path, "test", "www"))             //SetRootPath(filepath.Join(path, "test", "www"))
+	viper.Set("paths.images", filepath.Join(path, "test", "www", "images")) //SetImagesPath(filepath.Join(path, "test", "www", "images"))
 	// cfg.SetQueuesPath(filepath.Join(path, "test", "queues.sqlite"))
-	cfg.Set("paths.durations", filepath.Join(path, "test", "durations.sqlite"))
+	viper.Set("paths.durations", filepath.Join(path, "test", "durations.sqlite"))
 
 	// cfg.Log().SetLogLevel("DEBUG")
 	// cfg.Log().Info("initial session id: ", cfg.GetCurrentSessionID())

@@ -44,6 +44,8 @@ func SimpleSend(sq *state.Queue[int64]) {
 			} else {
 				// If we successfully sent the data remotely, we can now mark it is as sent.
 				sq.Remove(nextSessionIDToSend)
+				// Remove it from the ephemeral DB, or we just balloon RAM.
+				state.ClearEphemeralDurationsSession(nextSessionIDToSend)
 			}
 		} else {
 			// Always dequeue. We're storing locally "for free" into the

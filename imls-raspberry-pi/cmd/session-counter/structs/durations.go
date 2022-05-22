@@ -6,6 +6,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type Entry struct {
+	MAC   string
+	Mfg   string
+	Count int
+}
+
+type EphemeralDuration struct {
+	Start int64  `db:"start"`
+	End   int64  `db:"end"`
+	MAC   string `db:"mac"`
+}
+
 type ByStart []Duration
 
 func (a ByStart) Len() int { return len(a) }

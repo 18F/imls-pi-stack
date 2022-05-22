@@ -28,6 +28,7 @@ func ProcessData(sq *state.Queue[int64]) bool {
 	for _, se := range state.GetMACs() {
 
 		d := structs.Duration{
+			ID:        pidCounter,
 			PiSerial:  viper.GetString("device.serial"),
 			SessionID: fmt.Sprint(state.GetCurrentSessionId()),
 			FCFSSeqID: viper.GetString("device.fcfsSeqId"),

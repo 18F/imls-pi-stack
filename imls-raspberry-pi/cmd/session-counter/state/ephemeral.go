@@ -1,7 +1,6 @@
 package state
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"time"
 
@@ -37,13 +36,14 @@ func ClearEphemeralMACDB() {
 	emd = make(EphemeralMACDB)
 }
 
+/*
 // NOTE: Do not log MAC addresses.
 func RecordMAC(mac string) {
 	now := GetClock().Now().In(time.Local).Unix()
 	// Check if we already have the MAC address in the ephemeral table.
 	if p, ok := emd[mac]; ok {
 		// Do not log MAC addresses.
-		// log.Debug().Str("mac", mac).Msg("recordmac: exists, updating")
+		log.Debug().Str("mac", mac).Msg("recordmac: exists, updating")
 		// Has this device been away for more than 2 hours?
 		// Start by grabbing the start/end times.
 		se := emd[mac]
@@ -53,7 +53,7 @@ func RecordMAC(mac string) {
 			// unchanged, and create a new entry for the current mac address, in case we
 			// see it again (in less than 2h).
 			// Do not log MAC addresses.
-			// log.Debug().Str("mac", mac).Msg("recordmac: refreshing/changing")
+			log.Debug().Str("mac", mac).Msg("recordmac: refreshing/changing")
 			sha1 := sha1.Sum([]byte(mac + fmt.Sprint(now)))
 			emd[fmt.Sprintf("%x", sha1)] = se
 			emd[mac] = StartEnd{Start: now, End: now}
@@ -64,7 +64,28 @@ func RecordMAC(mac string) {
 	} else {
 		// We have never seen the MAC address.
 		// Do not log MAC addresses.
-		// log.Debug().Str("mac", mac).Msg("recordmac: new, inserting")
+		log.Debug().Str("mac", mac).Msg("recordmac: new, inserting")
+		emd[mac] = StartEnd{Start: now, End: now}
+	}
+}
+*/
+
+// NOTE: Do not log MAC addresses.
+func RecordMAC(mac string) {
+	// FIXME MCJ 20220522 Should this be time.Local or time.UTC?
+	now := GetClock().Now().In(time.UTC).Unix()
+	// Check if we already have the MAC address in the ephemeral table.
+	if p, ok := emd[mac]; ok {
+		// Do not log MAC addresses.
+		//log.Debug().Str("mac", mac).Msg("recordmac: exists, updating")
+		// We track devices for the full day. We don't worry about "forgetting" them if they
+		// go away for two hours. Keeps things easier.
+		emd[mac] = StartEnd{Start: p.Start, End: now}
+
+	} else {
+		// We have never seen the MAC address.
+		// Do not log MAC addresses.
+		//log.Debug().Str("mac", mac).Msg("recordmac: new, inserting")
 		emd[mac] = StartEnd{Start: now, End: now}
 	}
 }

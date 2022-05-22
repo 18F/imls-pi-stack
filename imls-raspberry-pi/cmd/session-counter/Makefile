@@ -11,8 +11,6 @@ install: all
 	sudo cp session-counter /usr/local/bin/session-counter
 
 test:
-	go test api/*.go
-	go test model/*.go
 	go test state/*.go
 	go test interfaces/*.go
 	go test structs/*.go

@@ -35,6 +35,7 @@ func SimpleSend(sq *state.Queue[int64]) {
 			}
 			// After writing images, we come back and try and send the data remotely.
 			// cfg.Log().Debug("PostJSONing ", len(data), " duration datas")
+			// FIXME: Rplace this with a resty or something. MCJ 20220522
 			err := http.PostJSON(viper.GetString("storage.durationsURI"), data)
 			if err != nil {
 				log.Info().

@@ -13,10 +13,10 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/suite"
-	"gsa.gov/18f/internal/interfaces"
+	"gsa.gov/18f/cmd/session-counter/interfaces"
+	"gsa.gov/18f/cmd/session-counter/state"
+	"gsa.gov/18f/cmd/session-counter/structs"
 	"gsa.gov/18f/internal/logwrapper"
-	"gsa.gov/18f/internal/state"
-	"gsa.gov/18f/internal/structs"
 )
 
 const PASS = true

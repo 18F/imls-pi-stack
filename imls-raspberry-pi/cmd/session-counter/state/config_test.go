@@ -3,6 +3,7 @@ package state
 import (
 	"testing"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 )
@@ -12,13 +13,21 @@ type ConfigSuite struct {
 }
 
 func (suite *ConfigSuite) SetupTest() {
+	viper.AddConfigPath(".")
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("config-pi")
+
+	if err := viper.ReadInConfig(); err == nil {
+		log.Info().Msg(viper.ConfigFileUsed())
+	} else {
+		panic("could not find config. exiting.")
+	}
 }
 
 func (suite *ConfigSuite) AfterTest(suiteName, testName string) {
 }
 
 func (suite *ConfigSuite) TestConfigDefaults() {
-	GetConfig()
 	var expected = []string{"local:stderr", "local:tmp", "api:directus"}
 	result := viper.GetStringSlice("logging.loggers")
 	for i := 0; i < 3; i += 1 {
@@ -29,9 +38,8 @@ func (suite *ConfigSuite) TestConfigDefaults() {
 }
 
 func (suite *ConfigSuite) TestConfigWrite() {
-	dc := GetConfig()
-	dc.Set("device.deviceTag", "a random string")
-	result := dc.Get("device.deviceTag")
+	viper.Set("device.deviceTag", "a random string")
+	result := viper.Get("device.deviceTag")
 	if result != "a random string" {
 		suite.Fail("write was not reflected")
 	}

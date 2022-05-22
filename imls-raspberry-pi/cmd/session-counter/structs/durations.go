@@ -1,9 +1,9 @@
 package structs
 
 import (
-	"fmt"
-	"reflect"
-	"strings"
+	"encoding/json"
+
+	"github.com/rs/zerolog/log"
 )
 
 type ByStart []Duration
@@ -22,31 +22,24 @@ type Durations struct {
 }
 
 type Duration struct {
-	ID        int    `json:"id" db:"id" type:"INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL"`
-	PiSerial  string `json:"pi_serial" db:"pi_serial" type:"TEXT"`
-	SessionID string `json:"session_id" db:"session_id" type:"TEXT"`
-	FCFSSeqID string `json:"fcfs_seq_id" db:"fcfs_seq_id" type:"TEXT"`
-	DeviceTag string `json:"device_tag" db:"device_tag" type:"TEXT"`
-	PatronID  int    `json:"patron_index" db:"patron_index" type:"INTEGER"`
-	Start     int64  `json:"start,string" db:"start" type:"INTEGER"`
-	End       int64  `json:"end,string" db:"end" type:"INTEGER"`
+	ID        int    `json:"id"`
+	PiSerial  string `json:"pi_serial"`
+	SessionID string `json:"session_id"`
+	FCFSSeqID string `json:"fcfs_seq_id"`
+	DeviceTag string `json:"device_tag"`
+	PatronID  int    `json:"patron_index"`
+	Start     int64  `json:"start,string"`
+	End       int64  `json:"end,string"`
 }
 
-func (d Duration) AsMap() map[string]interface{} {
-	m := make(map[string]interface{})
-	rt := reflect.TypeOf(d)
-	if rt.Kind() != reflect.Struct {
-		panic("bad type")
+func (d *Duration) AsMap() map[string]interface{} {
+	e, err := json.Marshal(d)
+	var js map[string]interface{}
+	json.Unmarshal([]byte(e), &js)
+	if err != nil {
+		log.Fatal().
+			Err(err).
+			Msg("could not marshal duration struct")
 	}
-	for i := 0; i < rt.NumField(); i++ {
-		f := rt.Field(i)
-		r := reflect.ValueOf(d)
-		// log.Println("tag db", f.Tag.Get("db"))
-		if !strings.Contains(f.Tag.Get("type"), "AUTOINCREMENT") {
-			col := strings.ReplaceAll(strings.Split(f.Tag.Get("db"), ",")[0], "\"", "")
-			nom := strings.ReplaceAll(fmt.Sprintf("%v", reflect.Indirect(r).FieldByName(f.Name)), "\"", "")
-			m[string(col)] = nom
-		}
-	}
-	return m
+	return js
 }

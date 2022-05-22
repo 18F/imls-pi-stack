@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
-	github.com/benbjohnson/clock v1.1.0
+	github.com/benbjohnson/clock v1.3.0
 	github.com/briandowns/spinner v1.16.0
 	github.com/fatih/color v1.13.0
 	github.com/fogleman/gg v1.3.0

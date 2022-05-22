@@ -105,7 +105,7 @@ func checkDeterministic(sq *state.Queue[int64], rundays int, nummacs int, numfou
 			log.Debug().
 				Int64("id", int64(d.ID)).
 				Int64("duration", d.End-d.Start).
-				Int("target", rundays*60*60*24-60).
+				Int("target", rundays*60*60*24-60). // rundays needs to always be 1... because we go day-by-day...
 				Msg("device")
 			if d.End-d.Start == int64(rundays*60*60*24-60) {
 				ok = ok && true
@@ -219,7 +219,11 @@ func TestAllUp(t *testing.T) {
 		t.Fail()
 	}
 	time.Sleep(2 * time.Second)
-	ok = MockRun(2, 20, 10, true, cf)
+
+	mt, _ = time.ParseInLocation("2006-01-02T15:04", "1975-10-11T04:00", time.UTC)
+	mock.Set(mt.UTC())
+	state.SetClock(mock)
+	ok = MockRun(2, 20, 15, true, cf)
 	if !ok {
 		t.Fail()
 	}

@@ -1,3 +1,7 @@
+# This repository has moved.
+
+We have moved development to [https://github.com/IMLS/estimating-wifi](https://github.com/IMLS/estimating-wifi) -- please follow there for further updates on this project.
+
 # IMLS Pi Stack
 
 Pi Stack is a pilot project to automate the monitoring of wifi usage via low-cost and open source tools.
